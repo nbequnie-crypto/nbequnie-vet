@@ -9,9 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     
+    <!-- Icons & Charts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- FIREBASE COMPAT -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -25,7 +27,8 @@
                         primary: '#003e40',
                         secondary: '#1a7a7d',
                         light: '#ffffff',
-                        gold: '#d4af37'
+                        gold: '#d4af37',
+                        danger: '#e3342f'
                     },
                     fontFamily: {
                         sans: ['Tajawal', 'sans-serif'],
@@ -162,6 +165,7 @@
         </div>
     </nav>
 
+    <!-- Mobile Nav -->
     <div class="md:hidden fixed bottom-4 left-4 right-4 z-40 glass-dark rounded-2xl shadow-2xl border border-white/10 px-2 py-3 flex justify-between items-center print-hide animate-fade">
         <a href="#home" class="nav-item active flex flex-col items-center justify-center w-1/5 relative" data-target="home"><i class="fas fa-home text-xl mb-1"></i><span class="text-[10px] font-bold" data-i18n="nav_home">الرئيسية</span></a>
         <a href="#services" class="nav-item flex flex-col items-center justify-center w-1/5 relative" data-target="services"><i class="fas fa-briefcase-medical text-xl mb-1"></i><span class="text-[10px] font-bold" data-i18n="nav_services">الخدمات</span></a>
@@ -184,6 +188,7 @@
                 </div>
                 <div class="w-full md:w-1/2 animate-fade" style="animation-delay: 0.4s;">
                     <div class="glass-light p-2 rounded-3xl relative overflow-hidden shadow-xl border border-white hero-img-container h-80 md:h-[450px]" id="displayHomeSlider">
+                        <!-- Dynamic Slider Images go here -->
                         <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 z-10 mix-blend-overlay pointer-events-none"></div>
                         <img src="https://images.unsplash.com/photo-1598974357801-cbca100e65d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Horse Care" class="w-full h-full object-cover rounded-2xl grayscale-[20%] slider-image active">
                     </div>
@@ -243,7 +248,7 @@
             
             <div id="studsLoader" class="flex flex-col items-center justify-center py-20">
                 <i class="fas fa-spinner fa-spin text-4xl text-secondary mb-3"></i>
-                <p class="text-sm font-bold text-gray-500">جاري تحميل القائمة...</p>
+                <p class="text-sm font-bold text-gray-500">جاري تحميل قائمة الفحول...</p>
             </div>
             <div id="studsGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
         </div>
@@ -354,6 +359,7 @@
                 </button>
             </div>
 
+            <!-- CLIENT PANEL -->
             <div id="userPanel" class="hidden animate-fade">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-1">
@@ -398,6 +404,7 @@
                 </div>
             </div>
 
+            <!-- ADMIN PANEL -->
             <div id="adminPanel" class="hidden animate-fade">
                 <!-- Admin Tabs -->
                 <div class="flex flex-wrap gap-2 mb-6 bg-white/50 p-2 rounded-xl border border-white shadow-sm overflow-x-auto">
@@ -1032,6 +1039,7 @@
         }
         window.addEventListener('hashchange', handleRouteChange);
 
+        // --- STUDS FALLBACK SEED ---
         const initialStallionsSeed = [
             { name: "EL palacio", sire: "AL LAHAB", dam: "EL DORADA", type: "Frozen", contract: "15800", fee: "2500", img: "", discount: 0 },
             { name: "Ghaith Al Zobair", sire: "RFI Farid", dam: "Fazea al Zobair", type: "Frozen", contract: "12000", fee: "2500", img: "", discount: 0 },
@@ -1061,13 +1069,12 @@
             { name: "Amir NM", sire: "Nabil Alsakab", dam: "Ekram Al Khaled", type: "Fresh", contract: "Free", fee: "1500", img: "", discount: 0 }
         ];
 
-        let allStudsList = [...initialStallionsSeed]; // Render local immediately
-
         async function checkAndSeedStuds() {
             if(!db) return;
             try {
                 const snapshot = await db.collection('studs').limit(1).get();
                 if(snapshot.empty) {
+                    console.log("Seeding initial studs database...");
                     const batch = db.batch();
                     initialStallionsSeed.forEach(s => {
                         const docRef = db.collection('studs').doc();
@@ -1075,7 +1082,7 @@
                     });
                     await batch.commit();
                 }
-            } catch(e) {}
+            } catch(e) { console.log("Seeding skipped or failed."); }
         }
 
         const firebaseConfig = {
@@ -1100,9 +1107,19 @@
                 auth = firebase.auth();
                 try { secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp"); } 
                 catch (err) { secondaryApp = firebase.app("SecondaryApp"); }
+            } else {
+                throw new Error("Firebase library is not loaded.");
             }
         } catch (error) {
             console.warn("Firebase Init Error:", error);
+            setTimeout(() => {
+                const lang = localStorage.getItem('siteLang') || 'ar';
+                if(window.location.protocol === 'file:') {
+                    showMsg(lang === 'ar' ? 'عذراً، قواعد البيانات لا تعمل عند فتح الملف مباشرة من الكمبيوتر (file://). يرجى رفعه على Netlify أو استضافة لكي يعمل.' : 'Firebase requires http/https to work. Please host the file.');
+                } else {
+                    showMsg(lang === 'ar' ? 'تعذر الاتصال بقاعدة البيانات. يرجى التأكد من اتصال الإنترنت وإيقاف مانع الإعلانات (AdBlocker).' : 'Database failed to load. Please check connection and AdBlocker.');
+                }
+            }, 1000);
         }
 
         let unsubscribeOrders = null; 
@@ -1116,14 +1133,24 @@
         let allExpensesList = [];
         let allOrdersList = [];
         let allUsersList = [];
+        let allStudsList = [];
+
+        const statusMap = {
+            'pending': { class: 'status-pending' },
+            'approved': { class: 'status-approved' },
+            'completed': { class: 'status-completed' },
+            'rejected': { class: 'status-rejected' }
+        };
 
         window.logout = function() {
             showMsg(currentLang === 'ar' ? 'هل تريد بالتأكيد تسجيل الخروج من حسابك؟' : 'Are you sure you want to logout?', true, async () => {
                 if(auth) {
                     try { 
                         await auth.signOut(); 
-                        window.location.href = window.location.href.split('#')[0]; // Hard reload
-                    } catch(e) { window.location.reload(true); }
+                        currentUser = null;
+                        window.location.hash = 'portal';
+                        window.location.reload(); // HARD RELOAD to clear all sessions and DOM caches
+                    } catch(e) { window.location.reload(); }
                 }
             });
         };
@@ -1137,8 +1164,13 @@
                         if(userDoc.exists) {
                             const data = userDoc.data();
                             currentUser.role = data.role || 'user';
-                            if (currentUser.role === 'admin') currentUser.name = currentLang === 'ar' ? 'الإدارة' : 'Admin';
-                            else currentUser.name = data.name || (currentLang === 'ar' ? 'عميلنا العزيز' : 'Dear Client');
+                            
+                            if (currentUser.role === 'admin') {
+                                currentUser.name = currentLang === 'ar' ? 'الإدارة' : 'Admin';
+                            } else {
+                                currentUser.name = data.name || (currentLang === 'ar' ? 'عميلنا العزيز' : 'Dear Client');
+                            }
+                            
                             currentUser.phone = data.phone || '';
                         } else if(user.email === 'admin@nb.com') {
                             currentUser.role = 'admin';
@@ -1161,7 +1193,7 @@
         if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if(!auth) return showMsg(currentLang === 'ar' ? "النظام غير متصل حالياً." : "Database not connected.");
+                if(!auth) return showMsg(currentLang === 'ar' ? "النظام غير متصل بقاعدة البيانات حالياً." : "Database not connected.");
                 const loader = document.getElementById('authLoader');
                 loader.classList.remove('hidden'); loader.classList.add('flex');
                 const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -1180,7 +1212,7 @@
         if (registerForm) {
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if(!auth || !db) return showMsg(currentLang === 'ar' ? "النظام غير متصل حالياً." : "Database not connected.");
+                if(!auth || !db) return showMsg(currentLang === 'ar' ? "النظام غير متصل بقاعدة البيانات حالياً." : "Database not connected.");
                 const loader = document.getElementById('authLoader');
                 loader.classList.remove('hidden'); loader.classList.add('flex');
                 const name = document.getElementById('regName').value.trim();
@@ -1193,15 +1225,22 @@
                         name: name, phone: phone, email: email, role: (email==='admin@nb.com'?'admin':'user'), createdAt: Date.now()
                     });
                     showMsg(currentLang === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!');
-                } catch (err) { showMsg(err.message); } 
-                finally { loader.classList.remove('flex'); loader.classList.add('hidden'); }
+                } catch (err) { 
+                     showMsg(err.message); 
+                } finally { 
+                    loader.classList.remove('flex'); loader.classList.add('hidden'); 
+                }
             });
         }
 
         window.loadDashboard = function() {
             if(!currentUser) return;
-            if (currentUser.role === 'admin') document.getElementById('dashWelcomeName').innerText = currentLang === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Dashboard';
-            else document.getElementById('dashWelcomeName').innerText = currentUser.name;
+            
+            if (currentUser.role === 'admin') {
+                document.getElementById('dashWelcomeName').innerText = currentLang === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Dashboard';
+            } else {
+                document.getElementById('dashWelcomeName').innerText = currentUser.name;
+            }
             
             document.getElementById('dashEmail').innerText = currentUser.email;
             document.getElementById('dashPhone').innerText = currentUser.phone || '';
@@ -1225,6 +1264,7 @@
         window.switchAdminTab = function(tab) {
             document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
             document.getElementById(`adminTab-${tab}`).classList.remove('hidden');
+            
             document.querySelectorAll('[id^="tabBtn-"]').forEach(btn => {
                 btn.classList.remove('bg-primary', 'text-white');
                 btn.classList.add('text-gray-600', 'bg-transparent');
@@ -1236,6 +1276,7 @@
             }
         };
 
+        // --- ADMIN CLIENTS CREATION ---
         const adminAddClientForm = document.getElementById('adminAddClientForm');
         if(adminAddClientForm) {
             adminAddClientForm.addEventListener('submit', async (e) => {
@@ -1246,15 +1287,27 @@
                 const email = document.getElementById('adminRegEmail').value.trim().toLowerCase();
                 const pass = document.getElementById('adminRegPass').value;
                 const btn = document.getElementById('adminRegBtn');
+                
                 try {
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...'; btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
+                    btn.disabled = true;
                     const userCred = await secondaryApp.auth().createUserWithEmailAndPassword(email, pass);
-                    await db.collection("users").doc(userCred.user.uid).set({ name: name, phone: phone, email: email, role: 'user', createdAt: Date.now() });
+                    await db.collection("users").doc(userCred.user.uid).set({
+                        name: name, phone: phone, email: email, role: 'user', createdAt: Date.now()
+                    });
                     await secondaryApp.auth().signOut();
-                    document.getElementById('adminRegName').value = ''; document.getElementById('adminRegPhone').value = ''; document.getElementById('adminRegEmail').value = ''; document.getElementById('adminRegPass').value = '';
+                    
+                    document.getElementById('adminRegName').value = '';
+                    document.getElementById('adminRegPhone').value = '';
+                    document.getElementById('adminRegEmail').value = '';
+                    document.getElementById('adminRegPass').value = '';
                     showMsg(currentLang === 'ar' ? 'تم إضافة العميل بنجاح!' : 'Client added successfully!');
-                } catch (err) { showMsg(err.message); } 
-                finally { btn.innerHTML = `<i class="fas fa-user-plus"></i> <span>${translations[currentLang]['btn_add_client']}</span>`; btn.disabled = false; }
+                } catch (err) {
+                    showMsg(err.message);
+                } finally {
+                    btn.innerHTML = `<i class="fas fa-user-plus"></i> <span>${translations[currentLang]['btn_add_client']}</span>`;
+                    btn.disabled = false;
+                }
             });
         }
 
@@ -1270,7 +1323,7 @@
 
         window.deleteClient = function(userId) {
             if(!db) return;
-            showMsg(currentLang === 'ar' ? 'سيتم مسح بيانات هذا العميل من النظام، هل أنت متأكد؟' : 'Delete this client?', true, async () => {
+            showMsg(currentLang === 'ar' ? 'سيتم مسح بيانات هذا العميل من النظام (لن تمسح طلباته)، هل أنت متأكد؟' : 'Delete this client?', true, async () => {
                 try { await db.collection("users").doc(userId).delete(); } catch(error) { showMsg('Error deleting'); }
             });
         };
@@ -1287,38 +1340,39 @@
                 const userOrdersCount = allOrdersList.filter(o => o.uid === u.id || o.email === u.email).length;
                 html += `
                     <tr class="border-b border-gray-50 hover:bg-white/50 transition">
-                        <td class="p-3"><p class="text-sm font-bold text-primary">${String(u.name || '-')}</p></td>
-                        <td class="p-3"><p class="font-en text-xs text-gray-600" dir="ltr">${String(u.phone || '-')}</p></td>
-                        <td class="p-3"><p class="font-en text-xs text-gray-500">${String(u.email || '-')}</p></td>
+                        <td class="p-3"><p class="text-sm font-bold text-primary">${u.name || '-'}</p></td>
+                        <td class="p-3"><p class="font-en text-xs text-gray-600" dir="ltr">${u.phone || '-'}</p></td>
+                        <td class="p-3"><p class="font-en text-xs text-gray-500">${u.email}</p></td>
                         <td class="p-3 text-center"><span class="bg-secondary/10 text-secondary px-2 py-1 rounded font-bold font-en text-xs">${userOrdersCount}</span></td>
-                        <td class="p-3 text-center"><button onclick="deleteClient('${u.id}')" class="bg-red-50 text-red-600 border border-red-200 px-2 py-1.5 rounded text-[10px] font-bold hover:bg-red-500 hover:text-white transition shadow"><i class="fas fa-trash"></i> ${tDel}</button></td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteClient('${u.id}')" class="bg-red-50 text-red-600 border border-red-200 px-2 py-1.5 rounded text-[10px] font-bold hover:bg-red-500 hover:text-white transition shadow"><i class="fas fa-trash"></i> ${tDel}</button>
+                        </td>
                     </tr>`;
             });
             table.innerHTML = html;
         }
 
         function listenToStuds() {
-            if(!db) { renderStudsUI(); return; }
+            if(!db) return;
             if(unsubscribeStuds) unsubscribeStuds();
             unsubscribeStuds = db.collection("studs").onSnapshot((snapshot) => {
-                if(!snapshot.empty) {
-                    allStudsList = [];
-                    snapshot.forEach(doc => { allStudsList.push({ id: doc.id, ...doc.data() }); });
-                    allStudsList.sort((a,b) => a.name.localeCompare(b.name));
+                allStudsList = [];
+                snapshot.forEach(doc => { allStudsList.push({ id: doc.id, ...doc.data() }); });
+                
+                // Sort roughly alphabetically
+                allStudsList.sort((a,b) => a.name.localeCompare(b.name));
+                
+                renderStudsUI();
+                if(currentUser && currentUser.role === 'admin') {
+                    renderAdminStudsTable();
                 }
-                renderStudsUI();
-                if(currentUser && currentUser.role === 'admin') renderAdminStudsTable();
-            }, (error) => {
-                console.warn("Studs DB blocked, using fallback.", error);
-                renderStudsUI();
             });
         }
 
         window.renderStudsUI = function() {
             const grid = document.getElementById('studsGrid');
             if(!grid) return;
-            const loader = document.getElementById('studsLoader');
-            if(loader) loader.style.display = 'none';
+            document.getElementById('studsLoader').style.display = 'none';
             grid.classList.remove('hidden');
             grid.innerHTML = '';
             
@@ -1333,8 +1387,14 @@
                 } else {
                     if(cDisc > 0) {
                         const newPrice = cPrice - (cPrice * (cDisc / 100));
-                        contractHtml = `<span class="text-gray-400 line-through text-[10px] mr-1">${cPrice}</span> <span class="text-red-500 font-black">${newPrice} SAR</span><span class="bg-red-500 text-white text-[9px] px-1 rounded absolute -top-2 -left-2 rotate-12 shadow">-${cDisc}%</span>`;
-                    } else contractHtml = `<span class="text-primary font-black">${cPrice} SAR</span>`;
+                        contractHtml = `
+                            <span class="text-gray-400 line-through text-[10px] mr-1">${cPrice}</span> 
+                            <span class="text-red-500 font-black">${newPrice} SAR</span>
+                            <span class="bg-red-500 text-white text-[9px] px-1 rounded absolute -top-2 -left-2 rotate-12 shadow">-${cDisc}%</span>
+                        `;
+                    } else {
+                        contractHtml = `<span class="text-primary font-black">${cPrice} SAR</span>`;
+                    }
                 }
 
                 let imgHtml = '';
@@ -1368,14 +1428,17 @@
 
         window.filterStuds = function() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.stud-item').forEach(i => {
-                if(i.getAttribute('data-name').includes(query)) i.style.display='flex'; else i.style.display='none';
+            const items = document.querySelectorAll('.stud-item');
+            let has = false;
+            items.forEach(i => {
+                if(i.getAttribute('data-name').includes(query)){ i.style.display='flex'; has=true; } else i.style.display='none';
             });
+            document.getElementById('noResults').style.display = has ? 'none' : 'block';
         };
 
         window.bookStud = function(horseName) {
             if(typeof currentUser === 'undefined' || !currentUser) { 
-                showMsg(currentLang === 'ar' ? 'يرجى تسجيل الدخول أولاً لطلب الخدمة.' : 'Please login first.'); 
+                showMsg(currentLang === 'ar' ? 'يرجى تسجيل الدخول أولاً لطلب الخدمة.' : 'Please login first to book a service.'); 
                 window.location.hash = 'portal'; 
             } else { 
                 window.location.hash = 'dashboard'; 
@@ -1386,6 +1449,7 @@
             }
         };
 
+        // ADMIN STUDS LOGIC
         const adminAddStudForm = document.getElementById('adminAddStudForm');
         if(adminAddStudForm) {
             adminAddStudForm.addEventListener('submit', async (e) => {
@@ -1402,12 +1466,19 @@
                 const img = document.getElementById('studImg').value.trim();
                 
                 const btn = document.getElementById('adminStudBtn');
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...'; btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
+                btn.disabled = true;
+
                 const payload = { name, sire, dam, type, contract, fee, discount, img, timestamp: Date.now() };
 
                 try {
-                    if(id) { await db.collection("studs").doc(id).update(payload); showMsg('تم التعديل بنجاح'); } 
-                    else { await db.collection("studs").add(payload); showMsg('تمت الإضافة بنجاح'); }
+                    if(id) {
+                        await db.collection("studs").doc(id).update(payload);
+                        showMsg('تم التعديل بنجاح');
+                    } else {
+                        await db.collection("studs").add(payload);
+                        showMsg('تمت الإضافة بنجاح');
+                    }
                     resetStudForm();
                 } catch(err) { showMsg('Error saving stud'); }
                 finally { btn.innerHTML = '<i class="fas fa-save"></i> حفظ الفحل'; btn.disabled = false; }
@@ -1426,6 +1497,7 @@
             document.getElementById('studFee').value = stud.fee;
             document.getElementById('studDiscount').value = stud.discount || 0;
             document.getElementById('studImg').value = stud.img || '';
+            
             document.getElementById('adminStudBtn').innerHTML = '<i class="fas fa-edit"></i> تحديث الفحل';
             document.getElementById('adminStudBtn').classList.replace('bg-secondary', 'bg-blue-600');
             window.scrollTo({ top: document.getElementById('adminAddStudForm').offsetTop - 100, behavior: 'smooth' });
@@ -1441,7 +1513,7 @@
         window.deleteStud = function(id) {
             if(!db) return;
             showMsg(currentLang === 'ar' ? 'متأكد من حذف هذا الفحل؟' : 'Delete stud?', true, async () => {
-                try { await db.collection("studs").doc(id).delete(); } catch(error) {}
+                try { await db.collection("studs").doc(id).delete(); } catch(error) { showMsg('Error'); }
             });
         };
 
@@ -1483,6 +1555,7 @@
                 const desc = document.getElementById('setHomeDesc').value.trim();
                 const imagesStr = document.getElementById('setHomeImages').value.trim();
                 const images = imagesStr.split(',').map(url => url.trim()).filter(url => url !== '');
+                
                 try {
                     await db.collection("settings").doc("homepage").set({ title, desc, images }, { merge: true });
                     showMsg('تم تحديث إعدادات الصفحة الرئيسية بنجاح!');
@@ -1496,6 +1569,7 @@
             unsubscribeHome = db.collection("settings").doc("homepage").onSnapshot((doc) => {
                 if(doc.exists) {
                     const data = doc.data();
+                    
                     if(document.getElementById('setHomeTitle')) document.getElementById('setHomeTitle').value = data.title || '';
                     if(document.getElementById('setHomeDesc')) document.getElementById('setHomeDesc').value = data.desc || '';
                     if(document.getElementById('setHomeImages')) document.getElementById('setHomeImages').value = (data.images || []).join(', \n');
@@ -1528,23 +1602,30 @@
             }, 3000);
         }
 
+        // --- SAVED SERVICES MANAGEMENT ---
         function listenToServices() {
             if(!db) return;
             db.collection("settings").doc("services").onSnapshot((doc) => {
                 let servicesList = [];
-                if(doc.exists) servicesList = doc.data().items || [];
+                if(doc.exists) { servicesList = doc.data().items || []; }
+                
                 window.globalSavedServices = servicesList;
                 const select = document.getElementById('savedServicesSelect');
                 if(select) {
                     select.innerHTML = '<option value="">-- اختر من القائمة --</option>' + 
                         servicesList.map(i => `<option value="${i.desc}" data-price="${i.price}">${i.desc}</option>`).join('');
                 }
+                
                 const adminList = document.getElementById('settingsServicesList');
                 if(adminList) {
-                    if(servicesList.length === 0) { adminList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">لا توجد خدمات.</p>'; return; }
+                    if(servicesList.length === 0) { adminList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">لا توجد خدمات محفوظة.</p>'; return; }
                     let html = '';
                     servicesList.forEach((s, idx) => {
-                        html += `<li class="py-2 flex justify-between items-center group"><span class="font-bold text-gray-700">${s.desc} <span class="font-en text-secondary text-xs mx-2">(${s.price} SAR)</span></span><button onclick="deleteSavedService(${idx})" class="text-red-400 hover:text-red-600 bg-red-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash text-xs"></i></button></li>`;
+                        html += `
+                        <li class="py-2 flex justify-between items-center group">
+                            <span class="font-bold text-gray-700">${s.desc} <span class="font-en text-secondary text-xs mx-2">(${s.price} SAR)</span></span>
+                            <button onclick="deleteSavedService(${idx})" class="text-red-400 hover:text-red-600 bg-red-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash text-xs"></i></button>
+                        </li>`;
                     });
                     adminList.innerHTML = html;
                 }
@@ -1553,10 +1634,11 @@
 
         window.deleteSavedService = async function(index) {
             if(!db || !window.globalSavedServices) return;
-            showMsg(currentLang === 'ar' ? 'متأكد من الحذف؟' : 'Delete service?', true, async () => {
+            showMsg(currentLang === 'ar' ? 'متأكد من حذف هذه الخدمة من قائمة الفواتير؟' : 'Delete this saved service?', true, async () => {
                 let updated = [...window.globalSavedServices];
                 updated.splice(index, 1);
-                try { await db.collection("settings").doc("services").set({ items: updated }, { merge: true }); } catch(e) {}
+                try { await db.collection("settings").doc("services").set({ items: updated }, { merge: true }); }
+                catch(e) {}
             });
         };
 
@@ -1586,6 +1668,11 @@
         function listenToOrdersRealtime() {
             if(!db) return;
             if(unsubscribeOrders) unsubscribeOrders();
+            const uIcon = document.getElementById('userSyncIcon');
+            const aIcon = document.getElementById('adminSyncIcon');
+            if(uIcon) uIcon.classList.add('fa-spin');
+            if(aIcon) aIcon.classList.add('fa-spin');
+            
             unsubscribeOrders = db.collection("orders").onSnapshot((snapshot) => {
                 allOrdersList = [];
                 snapshot.forEach(doc => { allOrdersList.push({ id: doc.id, ...doc.data() }); });
@@ -1597,6 +1684,9 @@
                 } else if (currentUser) {
                     renderUserOrders(allOrdersList.filter(o => o.uid === currentUser.uid));
                 }
+                
+                if(uIcon) uIcon.classList.remove('fa-spin');
+                if(aIcon) aIcon.classList.remove('fa-spin');
             });
         }
 
@@ -1607,11 +1697,16 @@
             orders.forEach(o => {
                 const s = statusMap[o.status] || statusMap['pending'];
                 const sLabel = translations[currentLang][`opt_${o.status}`] || o.status;
+                const safeId = String(o.id || '');
+                const safeService = String(o.service || '');
+                const safeHorse = String(o.horse || '');
+                const safeDate = String(o.date || '');
+
                 html += `
                     <div class="bg-white/60 p-4 rounded-xl border border-gray-100 flex justify-between items-center hover:border-secondary transition">
                         <div>
-                            <p class="font-bold text-primary text-sm">${String(o.service||'')} <span class="text-gray-400 font-normal mx-1 text-xs">(${String(o.horse||'')})</span></p>
-                            <p class="text-[11px] text-gray-500 mt-1 font-en">#${String(o.id).substring(0,6).toUpperCase()} • ${String(o.date||'')}</p>
+                            <p class="font-bold text-primary text-sm">${safeService} <span class="text-gray-400 font-normal mx-1 text-xs">(${safeHorse})</span></p>
+                            <p class="text-[11px] text-gray-500 mt-1 font-en">#${safeId.substring(0,6).toUpperCase()} • ${safeDate}</p>
                         </div>
                         <span class="px-3 py-1 rounded-full text-[11px] font-bold ${s.class}">${sLabel}</span>
                     </div>`;
@@ -1622,15 +1717,17 @@
         window.changeStatus = function(orderId, newStatus) {
             if(!db) return;
             if(newStatus === 'rejected') {
-                showMsg(currentLang === 'ar' ? 'متأكد من الرفض؟' : 'Reject order?', true, async () => {
+                showMsg(currentLang === 'ar' ? 'متأكد من رفض الطلب وإلغائه؟' : 'Are you sure you want to reject this order?', true, async () => {
                     try { await db.collection("orders").doc(orderId).update({ status: newStatus }); } catch (e) {}
                 });
-            } else db.collection("orders").doc(orderId).update({ status: newStatus }).catch(e => {});
+            } else {
+                db.collection("orders").doc(orderId).update({ status: newStatus }).catch(e => {});
+            }
         };
         
         window.deleteOrder = function(orderId) {
             if(!db) return;
-            showMsg(currentLang === 'ar' ? 'هل أنت متأكد من الحذف نهائياً؟' : 'Delete order completely?', true, async () => {
+            showMsg(currentLang === 'ar' ? 'هل أنت متأكد من حذف هذا الطلب نهائياً؟' : 'Delete order completely?', true, async () => {
                 try { await db.collection("orders").doc(orderId).delete(); } catch(error) {}
             });
         };
@@ -1641,11 +1738,16 @@
             if(countSpan) countSpan.innerText = `${orders.length} Orders`;
             if(orders.length === 0) { table.innerHTML = `<tr><td colspan="4" class="text-center p-4">لا توجد طلبات حالياً.</td></tr>`; return; }
             let html = '';
-            const tPending = translations[currentLang]['opt_pending'], tApproved = translations[currentLang]['opt_approved'], tCompleted = translations[currentLang]['opt_completed'], tRejected = translations[currentLang]['opt_rejected'];
+            
+            const tPending = translations[currentLang]['opt_pending'];
+            const tApproved = translations[currentLang]['opt_approved'];
+            const tCompleted = translations[currentLang]['opt_completed'];
+            const tRejected = translations[currentLang]['opt_rejected'];
 
             orders.forEach(o => {
                 try {
                     const s = statusMap[o.status] || statusMap['pending'];
+                    
                     const safeId = String(o.id || '');
                     const safeName = String(o.customerName || 'عميل').replace(/'/g, "\\'");
                     const safePhoneRaw = String(o.customerPhone || '');
@@ -1668,13 +1770,15 @@
                                         <option value="completed" ${o.status==='completed'?'selected':''}>${tCompleted}</option>
                                         <option value="rejected" ${o.status==='rejected'?'selected':''}>${tRejected}</option>
                                     </select>
-                                    <button onclick="changeStatus('${safeId}', 'rejected')" class="bg-red-50 text-red-500 border border-red-200 p-1.5 rounded hover:bg-red-500 hover:text-white transition"><i class="fas fa-times"></i></button>
-                                    <button onclick="deleteOrder('${safeId}')" class="bg-gray-100 text-gray-500 border border-gray-300 p-1.5 rounded hover:bg-gray-200 transition"><i class="fas fa-trash"></i></button>
-                                    <button onclick="openCreateInvoice('${safeId}', '${o.uid || ''}', '${safeName}', '${safePhoneRaw.replace(/'/g, "\\'")}', '${safeService} - ${safeHorse}', '${safeHorse}')" class="bg-secondary/10 text-secondary border border-secondary/20 p-1.5 rounded hover:bg-secondary hover:text-white transition font-bold text-[10px] flex items-center gap-1"><i class="fas fa-file-invoice-dollar"></i> فاتورة</button>
+                                    <button onclick="changeStatus('${safeId}', 'rejected')" class="bg-red-50 text-red-500 border border-red-200 p-1.5 rounded hover:bg-red-500 hover:text-white transition" title="رفض الطلب"><i class="fas fa-times"></i></button>
+                                    <button onclick="deleteOrder('${safeId}')" class="bg-gray-100 text-gray-500 border border-gray-300 p-1.5 rounded hover:bg-gray-200 transition" title="حذف الطلب نهائياً"><i class="fas fa-trash"></i></button>
+                                    <button onclick="openCreateInvoice('${safeId}', '${o.uid || ''}', '${safeName}', '${safePhoneRaw.replace(/'/g, "\\'")}', '${safeService} - ${safeHorse}', '${safeHorse}')" class="bg-secondary/10 text-secondary border border-secondary/20 p-1.5 rounded hover:bg-secondary hover:text-white transition font-bold text-[10px] flex items-center gap-1" title="إصدار فاتورة"><i class="fas fa-file-invoice-dollar"></i> فاتورة</button>
                                 </div>
                             </td>
                         </tr>`;
-                } catch(err) { console.error(err); }
+                } catch(err) {
+                    console.error("Order Format Error", err);
+                }
             });
             table.innerHTML = html;
         }
@@ -1688,28 +1792,42 @@
                 const qty = Number(document.getElementById('expQty').value) || 1;
                 const unit = document.getElementById('expUnit').value;
                 const price = Number(document.getElementById('expPrice').value);
+                const total = qty * price;
                 const btn = e.target.querySelector('button[type="submit"]');
 
                 if(desc && price >= 0) {
                     try {
-                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...'; btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
+                        btn.disabled = true;
+
                         const now = new Date();
                         const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
                         const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
                         const dateTimeStr = now.toLocaleDateString('en-GB', dateOptions) + ' ' + now.toLocaleTimeString('en-US', timeOptions);
 
-                        await db.collection('expenses').add({ desc, qty, unit, price, total: qty*price, date: dateTimeStr, timestamp: Date.now() });
-                        document.getElementById('expDesc').value = ''; document.getElementById('expQty').value = '1'; document.getElementById('expPrice').value = '';
-                    } catch(error) { showMsg('Error adding expense'); } 
-                    finally { btn.innerHTML = `<i class="fas fa-plus"></i> <span data-i18n="btn_add_expense">${translations[currentLang]['btn_add_expense']}</span>`; btn.disabled = false; }
+                        await db.collection('expenses').add({
+                            desc, qty, unit, price, total,
+                            date: dateTimeStr,
+                            timestamp: Date.now()
+                        });
+                        
+                        document.getElementById('expDesc').value = '';
+                        document.getElementById('expQty').value = '1';
+                        document.getElementById('expPrice').value = '';
+                    } catch(error) {
+                        showMsg('Error adding expense');
+                    } finally {
+                        btn.innerHTML = `<i class="fas fa-plus"></i> <span data-i18n="btn_add_expense">${translations[currentLang]['btn_add_expense']}</span>`;
+                        btn.disabled = false;
+                    }
                 }
             });
         }
 
         window.deleteExpense = function(id) {
             if(!db) return;
-            showMsg(currentLang === 'ar' ? 'هل أنت متأكد من الحذف؟' : 'Delete this expense?', true, async () => {
-                try { await db.collection("expenses").doc(id).delete(); } catch(error) { showMsg('Error'); }
+            showMsg(currentLang === 'ar' ? 'هل أنت متأكد من حذف هذا المصروف؟' : 'Delete this expense?', true, async () => {
+                try { await db.collection("expenses").doc(id).delete(); } catch(error) { showMsg('Error deleting'); }
             });
         };
 
@@ -1720,7 +1838,11 @@
                 allExpensesList = [];
                 snapshot.forEach(doc => { allExpensesList.push({ id: doc.id, ...doc.data() }); });
                 allExpensesList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-                if (currentUser && currentUser.role === 'admin') { renderAdminExpenses(allExpensesList); calculateStats(allInvoicesList, allExpensesList, allOrdersList); }
+                
+                if (currentUser && currentUser.role === 'admin') {
+                    renderAdminExpenses(allExpensesList);
+                    calculateStats(allInvoicesList, allExpensesList, allOrdersList);
+                }
             });
         }
 
@@ -1738,16 +1860,19 @@
                         <td class="p-3"><p class="text-sm font-bold text-red-800">${exp.desc}</p></td>
                         <td class="p-3 text-center"><p class="text-[10px] text-gray-500">${uLabel}</p><p class="font-en text-xs text-gray-700">${exp.qty}</p></td>
                         <td class="p-3 text-center"><p class="font-en font-black text-red-600">${exp.total} SAR</p></td>
-                        <td class="p-3 text-center"><button onclick="deleteExpense('${exp.id}')" class="bg-red-50 text-red-600 border border-red-200 px-2 py-1.5 rounded text-[10px] font-bold hover:bg-red-500 hover:text-white transition shadow"><i class="fas fa-trash"></i> ${tDel}</button></td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteExpense('${exp.id}')" class="bg-red-50 text-red-600 border border-red-200 px-2 py-1.5 rounded text-[10px] font-bold hover:bg-red-500 hover:text-white transition shadow"><i class="fas fa-trash"></i> ${tDel}</button>
+                        </td>
                     </tr>`;
             });
             table.innerHTML = html;
         }
 
+
         window.deleteInvoice = function(id) {
             if(!db) return;
             showMsg(currentLang === 'ar' ? 'هل أنت متأكد من حذف هذه الفاتورة بشكل نهائي؟' : 'Completely delete this invoice?', true, async () => {
-                try { await db.collection("invoices").doc(id).delete(); } catch(error) {}
+                try { await db.collection("invoices").doc(id).delete(); } catch(error) { showMsg('Error deleting'); }
             });
         }
 
@@ -1760,9 +1885,58 @@
                 allInvoicesList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
                 if (currentUser && currentUser.role === 'admin') {
-                    renderAdminInvoices(allInvoicesList); calculateStats(allInvoicesList, allExpensesList, allOrdersList);
-                } else if (currentUser) renderUserInvoices(allInvoicesList.filter(i => i.userId === currentUser.uid));
+                    renderAdminInvoices(allInvoicesList);
+                    calculateStats(allInvoicesList, allExpensesList, allOrdersList);
+                } else if (currentUser) {
+                    renderUserInvoices(allInvoicesList.filter(i => i.userId === currentUser.uid));
+                }
             });
+        }
+
+        function calculateStats(invoices, expenses = [], orders = []) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            let daily = 0, monthly = 0; let itemsCount = {};
+            let clientsOrdersCount = {};
+            
+            let totalRevenue = 0;
+            invoices.forEach(inv => {
+                const invTotal = Number(inv.total);
+                totalRevenue += invTotal;
+
+                const invDate = new Date(inv.timestamp);
+                if (invDate >= today) daily += invTotal;
+                if (invDate >= firstDayOfMonth) monthly += invTotal;
+                (inv.items || []).forEach(item => {
+                    const cleanDesc = item.desc.split('-')[0].trim();
+                    itemsCount[cleanDesc] = (itemsCount[cleanDesc] || 0) + 1;
+                });
+            });
+
+            orders.forEach(o => {
+                const name = o.customerName || 'مجهول';
+                clientsOrdersCount[name] = (clientsOrdersCount[name] || 0) + 1;
+            });
+
+            let totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.total), 0);
+            let netProfit = totalRevenue - totalExpenses;
+            
+            document.getElementById('statDaily').innerText = daily.toLocaleString() + ' SAR';
+            document.getElementById('statMonthly').innerText = monthly.toLocaleString() + ' SAR';
+            document.getElementById('statTotalExp').innerText = totalExpenses.toLocaleString() + ' SAR';
+            document.getElementById('statNetProfit').innerText = netProfit.toLocaleString() + ' SAR';
+            
+            let topItem = '-', max = 0;
+            for(const [desc, count] of Object.entries(itemsCount)) {
+                if(count > max) { max = count; topItem = desc; }
+            }
+            document.getElementById('statTopItem').innerText = topItem;
+
+            let topClient = '-', maxClient = 0;
+            for(const [cname, count] of Object.entries(clientsOrdersCount)) {
+                if(count > maxClient) { maxClient = count; topClient = cname; }
+            }
+            document.getElementById('statTopClient').innerText = topClient + (maxClient > 0 ? ` (${maxClient})` : '');
         }
 
         function renderAdminInvoices(invoices) {
@@ -1806,7 +1980,9 @@
                             <span class="font-black text-secondary font-en text-lg">${inv.total} SAR</span>
                         </div>
                     </div>
-                    <button onclick="viewInvoice('${inv.id}')" class="w-full text-sm bg-primary/5 border border-primary/20 text-primary hover:bg-primary hover:text-white py-2 rounded-xl font-bold transition flex items-center justify-center gap-2"><i class="fas fa-print"></i> عرض الفاتورة</button>
+                    <button onclick="viewInvoice('${inv.id}')" class="w-full text-sm bg-primary/5 border border-primary/20 text-primary hover:bg-primary hover:text-white py-2 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-print"></i> عرض الفاتورة
+                    </button>
                 </div>`;
             });
             list.innerHTML = html;
@@ -1816,10 +1992,13 @@
         let currentEditingInvoiceId = null;
         
         window.openFreeInvoice = function() {
-            document.getElementById('invOrderId').value = ''; document.getElementById('invUserId').value = '';
-            document.getElementById('invCustName').value = ''; document.getElementById('invCustPhone').value = '';
+            document.getElementById('invOrderId').value = '';
+            document.getElementById('invUserId').value = '';
+            document.getElementById('invCustName').value = '';
+            document.getElementById('invCustPhone').value = '';
             document.getElementById('invDiscount').value = '0';
-            currentEditingInvoiceId = null; newInvoiceItems = [];
+            currentEditingInvoiceId = null;
+            newInvoiceItems = [];
             renderNewInvoiceItems();
             document.getElementById('invoiceModalTitle').innerHTML = '<i class="fas fa-file-invoice-dollar mx-1"></i> إصدار فاتورة حرة جديدة';
             document.getElementById('createInvoiceModal').classList.remove('hidden');
@@ -1829,10 +2008,16 @@
         window.openEditInvoice = function(invId) {
             const inv = allInvoicesList.find(i => i.id === invId);
             if(!inv) return;
-            document.getElementById('invOrderId').value = inv.orderId || ''; document.getElementById('invUserId').value = inv.userId || '';
-            document.getElementById('invCustName').value = inv.customerName || ''; document.getElementById('invCustPhone').value = inv.customerPhone || '';
+            
+            document.getElementById('invOrderId').value = inv.orderId || '';
+            document.getElementById('invUserId').value = inv.userId || '';
+            document.getElementById('invCustName').value = inv.customerName || '';
+            document.getElementById('invCustPhone').value = inv.customerPhone || '';
             document.getElementById('invDiscount').value = inv.discount || '0';
-            currentEditingInvoiceId = invId; newInvoiceItems = [...inv.items]; 
+            
+            currentEditingInvoiceId = invId;
+            newInvoiceItems = [...inv.items]; 
+            
             renderNewInvoiceItems();
             document.getElementById('invoiceModalTitle').innerHTML = '<i class="fas fa-edit mx-1 text-blue-500"></i> تعديل بيانات الفاتورة';
             document.getElementById('createInvoiceModal').classList.remove('hidden');
@@ -1840,21 +2025,41 @@
         };
 
         window.openCreateInvoice = function(orderId, uid, name, phone, defaultDesc, horseName) {
-            document.getElementById('invOrderId').value = orderId; document.getElementById('invUserId').value = uid;
-            document.getElementById('invCustName').value = name || ''; document.getElementById('invCustPhone').value = phone || '';
+            document.getElementById('invOrderId').value = orderId;
+            document.getElementById('invUserId').value = uid;
+            document.getElementById('invCustName').value = name || '';
+            document.getElementById('invCustPhone').value = phone || '';
             document.getElementById('invDiscount').value = '0';
-            currentEditingInvoiceId = null; newInvoiceItems = []; 
+            currentEditingInvoiceId = null;
+            
+            if(typeof loadSavedInvoiceItems === 'function') loadSavedInvoiceItems();
+
+            newInvoiceItems = []; 
 
             if (horseName && typeof allStudsList !== 'undefined') {
                 const stud = allStudsList.find(s => s.name.toLowerCase().trim() === horseName.toLowerCase().trim());
                 if (stud) {
                     const feeNum = parseInt(String(stud.fee).replace(/,/g, '')) || 0;
                     const contractNum = stud.contract === 'Free' ? 0 : (parseInt(String(stud.contract).replace(/,/g, '')) || 0);
-                    if (contractNum > 0) newInvoiceItems.push({ desc: (currentLang === 'ar' ? 'عقد تشبية الفحل: ' : 'Stud Contract: ') + stud.name, price: contractNum, qty: 1, unit: 'qty' });
-                    if (feeNum > 0) newInvoiceItems.push({ desc: (currentLang === 'ar' ? 'رسوم خدمة وتلقيح الفحل: ' : 'Stud Service Fee: ') + stud.name, price: feeNum, qty: 1, unit: 'qty' });
+                    
+                    if (contractNum > 0) {
+                        newInvoiceItems.push({
+                            desc: (currentLang === 'ar' ? 'عقد تشبية الفحل: ' : 'Stud Contract: ') + stud.name, 
+                            price: contractNum, qty: 1, unit: 'qty'
+                        });
+                    }
+                    if (feeNum > 0) {
+                        newInvoiceItems.push({
+                            desc: (currentLang === 'ar' ? 'رسوم خدمة وتلقيح الفحل: ' : 'Stud Service Fee: ') + stud.name, 
+                            price: feeNum, qty: 1, unit: 'qty'
+                        });
+                    }
                 }
             }
-            if(newInvoiceItems.length === 0) newInvoiceItems = [{desc: defaultDesc, price: 0, qty: 1, unit: 'qty'}];
+            
+            if(newInvoiceItems.length === 0) {
+                newInvoiceItems = [{desc: defaultDesc, price: 0, qty: 1, unit: 'qty'}];
+            }
             
             renderNewInvoiceItems();
             document.getElementById('invoiceModalTitle').innerHTML = '<i class="fas fa-file-invoice-dollar mx-1"></i> إصدار فاتورة جديدة';
@@ -1874,6 +2079,7 @@
                 const itemTotal = Number(item.price) * Number(item.qty);
                 subtotal += itemTotal;
                 const uLabel = translations[currentLang][`opt_${item.unit}`] || (item.unit === 'days' ? 'الأيام' : 'الكمية');
+
                 list.innerHTML += `
                     <div class="flex flex-col md:flex-row justify-between bg-white border p-3 rounded-lg text-sm md:items-center shadow-sm gap-2">
                         <span class="font-bold text-primary w-full md:w-1/2">${item.desc}</span>
@@ -1884,6 +2090,7 @@
                         </div>
                     </div>`;
             });
+
             const discount = Number(document.getElementById('invDiscount').value) || 0;
             const netTotal = Math.max(0, subtotal - discount);
             document.getElementById('invTotalDisplay').innerText = netTotal + ' SAR';
@@ -1897,18 +2104,29 @@
             
             if(desc && price >= 0 && qty >= 1) {
                 newInvoiceItems.push({desc, price, qty, unit});
+                
                 if(db && window.globalSavedServices) {
                     let savedItems = [...window.globalSavedServices];
                     const existingIndex = savedItems.findIndex(i => i.desc === desc);
-                    if (existingIndex === -1) savedItems.push({desc, price}); else savedItems[existingIndex].price = price;
+                    if (existingIndex === -1) { savedItems.push({desc, price}); } 
+                    else { savedItems[existingIndex].price = price; }
                     try { await db.collection('settings').doc('services').set({ items: savedItems }, { merge: true }); } catch(e){}
                 }
-                document.getElementById('newItemDesc').value = ''; document.getElementById('newItemPrice').value = ''; document.getElementById('newItemQty').value = '1'; document.getElementById('savedServicesSelect').value = '';
+
+                document.getElementById('newItemDesc').value = '';
+                document.getElementById('newItemPrice').value = '';
+                document.getElementById('newItemQty').value = '1';
+                document.getElementById('savedServicesSelect').value = '';
                 renderNewInvoiceItems();
-            } else showMsg('الرجاء إدخال بيانات صحيحة.');
+            } else {
+                showMsg('الرجاء إدخال بيانات صحيحة.');
+            }
         };
 
-        window.removeInvItem = function(index) { newInvoiceItems.splice(index, 1); renderNewInvoiceItems(); };
+        window.removeInvItem = function(index) {
+            newInvoiceItems.splice(index, 1);
+            renderNewInvoiceItems();
+        };
 
         window.saveInvoice = async function() {
             if(!db) return;
@@ -1917,14 +2135,17 @@
             const name = document.getElementById('invCustName').value;
             const phone = document.getElementById('invCustPhone').value;
             const discount = Number(document.getElementById('invDiscount').value) || 0;
-            let subtotal = 0; newInvoiceItems.forEach(i => subtotal += (Number(i.price) * Number(i.qty)));
+            
+            let subtotal = 0;
+            newInvoiceItems.forEach(i => subtotal += (Number(i.price) * Number(i.qty)));
             const total = Math.max(0, subtotal - discount);
             
             if(newInvoiceItems.length === 0) return showMsg('أضف خدمة واحدة على الأقل.');
             
             try {
                 const btn = document.getElementById('saveInvoiceBtn');
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...'; btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
+                btn.disabled = true;
 
                 const now = new Date();
                 const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
@@ -1933,16 +2154,29 @@
 
                 const payload = {
                     orderId, userId, customerName: name, customerPhone: phone,
-                    items: newInvoiceItems, subtotal: subtotal, discount: discount, total: total,
+                    items: newInvoiceItems, 
+                    subtotal: subtotal,
+                    discount: discount,
+                    total: total,
                     date: currentEditingInvoiceId ? (allInvoicesList.find(i=>i.id===currentEditingInvoiceId).date) : dateTimeStr,
                     timestamp: currentEditingInvoiceId ? (allInvoicesList.find(i=>i.id===currentEditingInvoiceId).timestamp) : Date.now()
                 };
 
-                if (currentEditingInvoiceId) { await db.collection('invoices').doc(currentEditingInvoiceId).update(payload); showMsg('تم تعديل الفاتورة بنجاح!'); } 
-                else { await db.collection('invoices').add(payload); if(orderId) { await db.collection("orders").doc(orderId).update({ status: 'approved' }).catch(e=>console.log(e)); } showMsg('تم حفظ الفاتورة بنجاح!'); }
+                if (currentEditingInvoiceId) {
+                    await db.collection('invoices').doc(currentEditingInvoiceId).update(payload);
+                    showMsg('تم تعديل الفاتورة بنجاح!');
+                } else {
+                    await db.collection('invoices').add(payload);
+                    if(orderId) { await db.collection("orders").doc(orderId).update({ status: 'approved' }).catch(e=>console.log(e)); }
+                    showMsg('تم حفظ الفاتورة بنجاح!');
+                }
                 closeCreateInvoice();
-            } catch(e) { showMsg('حدث خطأ. الرجاء المحاولة مرة أخرى.'); } 
-            finally { const btn = document.getElementById('saveInvoiceBtn'); if(btn) { btn.innerHTML = '<i class="fas fa-check"></i> حفظ وإصدار'; btn.disabled = false; } }
+            } catch(e) {
+                showMsg('حدث خطأ. الرجاء المحاولة مرة أخرى.');
+            } finally {
+                const btn = document.getElementById('saveInvoiceBtn');
+                if(btn) { btn.innerHTML = '<i class="fas fa-check"></i> حفظ وإصدار'; btn.disabled = false; }
+            }
         };
 
         window.viewInvoice = function(id) {
@@ -1955,6 +2189,7 @@
                 const p = item.price;
                 const uLabel = translations[currentLang][`opt_${item.unit}`] || (item.unit === 'days' ? 'الأيام' : 'الكمية');
                 const rowTotal = q * p;
+                
                 itemsHTML += `
                 <tr class="border-b border-gray-200">
                     <td class="py-3 px-4 text-gray-800 text-sm font-bold text-right ltr:text-left">${index + 1}. ${item.desc}</td>
@@ -1970,7 +2205,8 @@
                 <tr class="border-t-2 border-gray-300 bg-gray-50">
                     <th colspan="3" class="py-2 px-4 text-right text-sm font-bold text-gray-600">الخصم (Discount)</th>
                     <th class="py-2 px-4 text-left text-sm font-bold text-red-500 font-en">- ${inv.discount} SAR</th>
-                </tr>`;
+                </tr>
+                `;
             }
             
             const html = `
@@ -1978,93 +2214,152 @@
                 <div class="flex justify-between items-start border-b-2 border-secondary pb-6 mb-6">
                     <div class="flex items-center gap-4">
                         <div class="w-16 h-16 bg-primary text-white flex items-center justify-center rounded-xl shadow-lg border border-primary/20"><i class="fas fa-horse-head text-3xl"></i></div>
-                        <div><h1 class="text-2xl font-black text-primary font-en tracking-widest">NB EQUINE VET</h1><p class="text-sm text-secondary font-bold mt-1">عيادة بيطرية متخصصة للخيول</p></div>
+                        <div>
+                            <h1 class="text-2xl font-black text-primary font-en tracking-widest">NB EQUINE VET</h1>
+                            <p class="text-sm text-secondary font-bold mt-1">عيادة بيطرية متخصصة للخيول</p>
+                        </div>
                     </div>
-                    <div class="text-left rtl:text-right ltr:text-left bg-gray-50 p-3 rounded-lg border"><h2 class="text-lg font-black text-primary mb-1">فاتورة / INVOICE</h2><p class="text-xs text-gray-500 font-en mb-1">Inv No. #${inv.id.toUpperCase()}</p><p class="text-[11px] text-gray-500 font-en">Date: ${inv.date}</p></div>
+                    <div class="text-left rtl:text-right ltr:text-left bg-gray-50 p-3 rounded-lg border">
+                        <h2 class="text-lg font-black text-primary mb-1">فاتورة / INVOICE</h2>
+                        <p class="text-xs text-gray-500 font-en mb-1">Inv No. #${inv.id.toUpperCase()}</p>
+                        <p class="text-[11px] text-gray-500 font-en">Date: ${inv.date}</p>
+                    </div>
                 </div>
+                
                 <div class="mb-8 bg-primary/5 border border-primary/10 p-5 rounded-xl flex justify-between items-center">
-                    <div><p class="text-xs text-gray-500 font-bold mb-1">فاتورة لـ المربط / العميل:</p><h3 class="text-lg font-black text-primary">${inv.customerName}</h3></div>
-                    <div class="text-left rtl:text-right ltr:text-left"><p class="text-xs text-gray-500 font-bold mb-1">رقم التواصل:</p><h3 class="text-md font-bold text-gray-800 font-en" dir="ltr">${inv.customerPhone || '---'}</h3></div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-bold mb-1">فاتورة لـ المربط / العميل:</p>
+                        <h3 class="text-lg font-black text-primary">${inv.customerName}</h3>
+                    </div>
+                    <div class="text-left rtl:text-right ltr:text-left">
+                        <p class="text-xs text-gray-500 font-bold mb-1">رقم التواصل:</p>
+                        <h3 class="text-md font-bold text-gray-800 font-en" dir="ltr">${inv.customerPhone || '---'}</h3>
+                    </div>
                 </div>
+                
                 <table class="w-full mb-8">
                     <thead class="bg-primary text-white">
-                        <tr><th class="py-3 px-4 text-right ltr:text-left rounded-tr-xl font-bold text-sm w-1/2">البيان / الخدمة</th><th class="py-3 px-4 text-center font-bold text-sm w-1/6">العدد/المدة</th><th class="py-3 px-4 text-center font-bold text-sm w-1/6">السعر</th><th class="py-3 px-4 text-left rounded-tl-xl font-bold text-sm w-1/6">الإجمالي</th></tr>
+                        <tr>
+                            <th class="py-3 px-4 text-right ltr:text-left rounded-tr-xl font-bold text-sm w-1/2">البيان / الخدمة</th>
+                            <th class="py-3 px-4 text-center font-bold text-sm w-1/6">العدد/المدة</th>
+                            <th class="py-3 px-4 text-center font-bold text-sm w-1/6">السعر</th>
+                            <th class="py-3 px-4 text-left rounded-tl-xl font-bold text-sm w-1/6">الإجمالي</th>
+                        </tr>
                     </thead>
-                    <tbody>${itemsHTML}${discountRow}</tbody>
-                    <tfoot class="border-t-4 border-primary bg-gray-50"><tr><th colspan="3" class="py-4 px-4 text-right text-lg font-black text-primary">الصافي المستحق الدفع (Net Total)</th><th class="py-4 px-4 text-left text-xl font-black text-primary font-en">${inv.total} SAR</th></tr></tfoot>
+                    <tbody>
+                        ${itemsHTML}
+                        ${discountRow}
+                    </tbody>
+                    <tfoot class="border-t-4 border-primary bg-gray-50">
+                        <tr>
+                            <th colspan="3" class="py-4 px-4 text-right text-lg font-black text-primary">الصافي المستحق الدفع (Net Total)</th>
+                            <th class="py-4 px-4 text-left text-xl font-black text-primary font-en">${inv.total} SAR</th>
+                        </tr>
+                    </tfoot>
                 </table>
-            </div>`;
+                
+                <div class="bg-white border-2 border-secondary/20 p-5 rounded-xl text-sm flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-5 text-secondary text-9xl ltr:right-auto ltr:left-[-1rem]"><i class="fas fa-university"></i></div>
+                    <div class="relative z-10 w-full md:w-2/3">
+                        <h4 class="font-black text-secondary mb-3 border-b pb-2 inline-block"><i class="fas fa-money-check-alt mx-1"></i> بيانات التحويل البنكي (للسداد)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
+                            <p><span class="text-gray-500 font-bold text-xs">اسم المستفيد:</span><br><strong class="text-primary text-sm">NABIL MURIZAKI EID ALHARBI</strong></p>
+                            <p><span class="text-gray-500 font-bold text-xs">رقم الحساب:</span><br><strong class="font-en text-primary tracking-wider">5110000015131</strong></p>
+                            <p class="md:col-span-2"><span class="text-gray-500 font-bold text-xs">رقم الآيبان (IBAN):</span><br><strong class="font-en text-primary text-base tracking-widest bg-gray-100 px-2 py-0.5 rounded inline-block mt-1">SA94 1000 0051 1000 0015 1310</strong></p>
+                        </div>
+                    </div>
+                    <div class="relative z-10 mt-6 md:mt-0 text-center md:text-left bg-primary/5 p-4 rounded-xl border border-primary/10 w-full md:w-1/3">
+                        <p class="text-xs text-gray-500 font-bold mb-2 text-center border-b pb-2">تواصل مع العيادة</p>
+                        <p class="font-bold text-primary text-center font-en text-sm tracking-wider"><i class="fas fa-phone-alt mx-1 text-secondary"></i> 055 989 7669</p>
+                        <p class="font-bold text-primary mt-2 text-center font-en text-sm"><i class="fab fa-instagram mx-1 text-secondary"></i> @nb.equinevet</p>
+                    </div>
+                </div>
+            </div>
+            `;
             
             document.getElementById('printArea').innerHTML = html;
+            
             document.getElementById('waInvoiceBtn').onclick = () => {
-                const text = `مرحباً بك ${inv.customerName}،\n\nتم إصدار فاتورة جديدة من عيادة NB EQUINE VET برقم #${inv.id.substring(0,6).toUpperCase()}.\nالإجمالي المستحق: *${inv.total} ريال*.\n\nبيانات السداد البنكي:\nالمستفيد: NABIL MURIZAKI EID ALHARBI\nرقم الحساب: 5110000015131\nالآيبان: SA9410000051100000151310\n\nشكراً لثقتكم بنا.`;
+                const text = `مرحباً بك ${inv.customerName}،\n\nتم إصدار فاتورة جديدة من عيادة NB EQUINE VET برقم #${inv.id.substring(0,6).toUpperCase()}.\nالإجمالي المستحق: *${inv.total} ريال*.\n\nبيانات السداد البنكي:\nالمستفيد: NABIL MURIZAKI EID ALHARBI\nرقم الحساب: 5110000015131\nالآيبان: SA9410000051100000151310\n\nشكراً لثقتكم بنا، ونتمنى لخيلكم دوام الصحة. 🐎`;
                 const phone = (inv.customerPhone || '').replace(/^0+/, ''); 
                 if(phone.length > 5) { window.open(`https://wa.me/966${phone}?text=${encodeURIComponent(text)}`, '_blank'); } 
                 else { showMsg('لا يوجد رقم جوال صحيح مسجل في هذه الفاتورة.'); }
             };
+            
             document.getElementById('viewInvoiceModal').classList.remove('hidden');
         };
 
-        window.closeInvoiceModal = function() { document.getElementById('viewInvoiceModal').classList.add('hidden'); };
+        window.closeInvoiceModal = function() {
+            document.getElementById('viewInvoiceModal').classList.add('hidden');
+        };
 
         let dailyChartInst = null;
         let servicesChartInst = null;
 
-        function calculateStats(invoices, expenses = [], orders = []) {
-            const today = new Date(); today.setHours(0,0,0,0);
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            let daily = 0, monthly = 0; let itemsCount = {}; let clientsOrdersCount = {};
-            
-            let totalRevenue = 0;
-            invoices.forEach(inv => {
-                const invTotal = Number(inv.total); totalRevenue += invTotal;
-                const invDate = new Date(inv.timestamp);
-                if (invDate >= today) daily += invTotal;
-                if (invDate >= firstDayOfMonth) monthly += invTotal;
-                (inv.items || []).forEach(item => { const cleanDesc = item.desc.split('-')[0].trim(); itemsCount[cleanDesc] = (itemsCount[cleanDesc] || 0) + 1; });
-            });
-
-            orders.forEach(o => { const name = o.customerName || 'مجهول'; clientsOrdersCount[name] = (clientsOrdersCount[name] || 0) + 1; });
-
-            let totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.total), 0);
-            let netProfit = totalRevenue - totalExpenses;
-            
-            document.getElementById('statDaily').innerText = daily.toLocaleString() + ' SAR';
-            document.getElementById('statMonthly').innerText = monthly.toLocaleString() + ' SAR';
-            document.getElementById('statTotalExp').innerText = totalExpenses.toLocaleString() + ' SAR';
-            document.getElementById('statNetProfit').innerText = netProfit.toLocaleString() + ' SAR';
-            
-            let topItem = '-', max = 0;
-            for(const [desc, count] of Object.entries(itemsCount)) { if(count > max) { max = count; topItem = desc; } }
-            document.getElementById('statTopItem').innerText = topItem;
-
-            let topClient = '-', maxClient = 0;
-            for(const [cname, count] of Object.entries(clientsOrdersCount)) { if(count > maxClient) { maxClient = count; topClient = cname; } }
-            document.getElementById('statTopClient').innerText = topClient + (maxClient > 0 ? ` (${maxClient})` : '');
-        }
-
         window.openReportModal = function() {
-            let invTableRows = ''; let expTableRows = ''; let topClientsRows = '';
-            let totalRev = 0; let totalExp = 0; let datesMap = {}; let servicesMap = {}; let clientsRevMap = {};
+            let invTableRows = '';
+            let expTableRows = '';
+            let topClientsRows = '';
+            let totalRev = 0;
+            let totalExp = 0;
+            let datesMap = {};
+            let servicesMap = {};
+            let clientsRevMap = {};
             
             const sortedInvoices = [...allInvoicesList].sort((a,b) => b.timestamp - a.timestamp);
             const sortedExpenses = [...allExpensesList].sort((a,b) => b.timestamp - a.timestamp);
             
             sortedInvoices.forEach((inv, index) => {
-                const invTotal = Number(inv.total); totalRev += invTotal;
-                const cName = inv.customerName || 'عميل مجهول'; clientsRevMap[cName] = (clientsRevMap[cName] || 0) + invTotal;
-                const dateOnly = inv.date.split(' - ')[0]; datesMap[dateOnly] = (datesMap[dateOnly] || 0) + invTotal;
-                (inv.items || []).forEach(item => { const cleanDesc = item.desc.split('-')[0].trim(); servicesMap[cleanDesc] = (servicesMap[cleanDesc] || 0) + (Number(item.price) * Number(item.qty || 1)); });
-                invTableRows += `<tr class="border-b border-gray-200 text-sm"><td class="py-2 px-3 text-center">${index + 1}</td><td class="py-2 px-3 text-center font-en">#${inv.id.substring(0,6).toUpperCase()}</td><td class="py-2 px-3 font-bold">${inv.customerName}</td><td class="py-2 px-3 font-en text-[11px]">${inv.date}</td><td class="py-2 px-3 text-left font-en font-black text-green-700">+ ${invTotal.toLocaleString()} SAR</td></tr>`;
+                const invTotal = Number(inv.total);
+                totalRev += invTotal;
+                
+                const cName = inv.customerName || 'عميل مجهول';
+                clientsRevMap[cName] = (clientsRevMap[cName] || 0) + invTotal;
+                
+                const dateOnly = inv.date.split(' - ')[0]; 
+                datesMap[dateOnly] = (datesMap[dateOnly] || 0) + invTotal;
+                
+                (inv.items || []).forEach(item => {
+                    const cleanDesc = item.desc.split('-')[0].trim();
+                    servicesMap[cleanDesc] = (servicesMap[cleanDesc] || 0) + (Number(item.price) * Number(item.qty || 1));
+                });
+
+                invTableRows += `
+                    <tr class="border-b border-gray-200 text-sm">
+                        <td class="py-2 px-3 text-center">${index + 1}</td>
+                        <td class="py-2 px-3 text-center font-en">#${inv.id.substring(0,6).toUpperCase()}</td>
+                        <td class="py-2 px-3 font-bold">${inv.customerName}</td>
+                        <td class="py-2 px-3 font-en text-[11px]">${inv.date}</td>
+                        <td class="py-2 px-3 text-left font-en font-black text-green-700">+ ${invTotal.toLocaleString()} SAR</td>
+                    </tr>
+                `;
             });
 
             const topClientsArray = Object.keys(clientsRevMap).map(name => ({ name, total: clientsRevMap[name] })).sort((a, b) => b.total - a.total).slice(0, 5);
-            topClientsArray.forEach((c, idx) => { topClientsRows += `<tr class="border-b border-gray-100 text-sm"><td class="py-2 px-3 text-center text-gold font-black">#${idx + 1}</td><td class="py-2 px-3 font-bold text-primary">${c.name}</td><td class="py-2 px-3 text-left font-en font-black text-secondary">${c.total.toLocaleString()} SAR</td></tr>`; });
+            topClientsArray.forEach((c, idx) => {
+                topClientsRows += `
+                    <tr class="border-b border-gray-100 text-sm">
+                        <td class="py-2 px-3 text-center text-gold font-black">#${idx + 1}</td>
+                        <td class="py-2 px-3 font-bold text-primary">${c.name}</td>
+                        <td class="py-2 px-3 text-left font-en font-black text-secondary">${c.total.toLocaleString()} SAR</td>
+                    </tr>
+                `;
+            });
             if(topClientsRows === '') topClientsRows = `<tr><td colspan="3" class="text-center p-4">لا توجد بيانات عملاء.</td></tr>`;
 
             sortedExpenses.forEach((exp, index) => {
-                const expTotal = Number(exp.total); totalExp += expTotal;
-                expTableRows += `<tr class="border-b border-gray-200 text-sm"><td class="py-2 px-3 text-center">${index + 1}</td><td class="py-2 px-3 font-bold text-red-800">${exp.desc}</td><td class="py-2 px-3 text-center font-en text-gray-700">${exp.qty}</td><td class="py-2 px-3 font-en text-[11px]">${exp.date}</td><td class="py-2 px-3 text-left font-en font-black text-red-600">- ${expTotal.toLocaleString()} SAR</td></tr>`;
+                const expTotal = Number(exp.total);
+                totalExp += expTotal;
+                
+                expTableRows += `
+                    <tr class="border-b border-gray-200 text-sm">
+                        <td class="py-2 px-3 text-center">${index + 1}</td>
+                        <td class="py-2 px-3 font-bold text-red-800">${exp.desc}</td>
+                        <td class="py-2 px-3 text-center font-en text-gray-700">${exp.qty}</td>
+                        <td class="py-2 px-3 font-en text-[11px]">${exp.date}</td>
+                        <td class="py-2 px-3 text-left font-en font-black text-red-600">- ${expTotal.toLocaleString()} SAR</td>
+                    </tr>
+                `;
             });
 
             if (invTableRows === '') invTableRows = `<tr><td colspan="5" class="text-center p-4">لا توجد إيرادات مسجلة.</td></tr>`;
@@ -2078,36 +2373,102 @@
 
             const html = `
             <div class="p-8 bg-white" id="reportContentToPrint">
-                <div class="text-center mb-6 border-b-2 border-primary pb-4"><h1 class="text-2xl font-black text-primary mb-1">الميزانية والتقرير المالي المفصل</h1><h2 class="text-lg text-secondary font-en tracking-widest">NB EQUINE VET</h2><p class="text-xs text-gray-500 font-en mt-2">Generated on: ${printDate}</p></div>
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col justify-center items-center text-center"><span class="text-sm font-bold text-gray-600 mb-1">إجمالي الإيرادات</span><span class="text-2xl font-black text-green-700 font-en">${totalRev.toLocaleString()} SAR</span></div>
-                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col justify-center items-center text-center"><span class="text-sm font-bold text-gray-600 mb-1">إجمالي المصروفات</span><span class="text-2xl font-black text-red-600 font-en">${totalExp.toLocaleString()} SAR</span></div>
-                    <div class="${netProfit >= 0 ? 'bg-green-100 border-green-300 text-green-800' : 'bg-red-100 border-red-300 text-red-800'} border p-4 rounded-xl flex flex-col justify-center items-center text-center shadow-inner"><span class="text-sm font-bold mb-1">صافي الربح النهائي</span><span class="text-2xl font-black font-en" dir="ltr">${netProfit.toLocaleString()} SAR</span></div>
+                <div class="text-center mb-6 border-b-2 border-primary pb-4">
+                    <h1 class="text-2xl font-black text-primary mb-1">الميزانية والتقرير المالي المفصل</h1>
+                    <h2 class="text-lg text-secondary font-en tracking-widest">NB EQUINE VET</h2>
+                    <p class="text-xs text-gray-500 font-en mt-2">Generated on: ${printDate}</p>
                 </div>
+                
+                <!-- Metrics -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col justify-center items-center text-center">
+                        <span class="text-sm font-bold text-gray-600 mb-1">إجمالي الإيرادات</span>
+                        <span class="text-2xl font-black text-green-700 font-en">${totalRev.toLocaleString()} SAR</span>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col justify-center items-center text-center">
+                        <span class="text-sm font-bold text-gray-600 mb-1">إجمالي المصروفات</span>
+                        <span class="text-2xl font-black text-red-600 font-en">${totalExp.toLocaleString()} SAR</span>
+                    </div>
+                    <div class="${netProfit >= 0 ? 'bg-green-100 border-green-300 text-green-800' : 'bg-red-100 border-red-300 text-red-800'} border p-4 rounded-xl flex flex-col justify-center items-center text-center shadow-inner">
+                        <span class="text-sm font-bold mb-1">صافي الربح النهائي</span>
+                        <span class="text-2xl font-black font-en" dir="ltr">${netProfit.toLocaleString()} SAR</span>
+                    </div>
+                </div>
+
+                <!-- Charts & Top Clients -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 print-break-inside-avoid">
                     <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm"><h4 class="text-center font-bold text-primary mb-2 text-sm">مؤشر الدخل اليومي</h4><div class="h-48 relative"><canvas id="dailyRevenueChart"></canvas></div></div>
-                        <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm"><h4 class="text-center font-bold text-primary mb-2 text-sm">توزيع الإيرادات حسب الخدمة</h4><div class="h-48 relative"><canvas id="servicesPieChart"></canvas></div></div>
+                        <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
+                            <h4 class="text-center font-bold text-primary mb-2 text-sm">مؤشر الدخل اليومي</h4>
+                            <div class="h-48 relative"><canvas id="dailyRevenueChart"></canvas></div>
+                        </div>
+                        <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
+                            <h4 class="text-center font-bold text-primary mb-2 text-sm">توزيع الإيرادات حسب الخدمة</h4>
+                            <div class="h-48 relative"><canvas id="servicesPieChart"></canvas></div>
+                        </div>
                     </div>
+                    
                     <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm flex flex-col">
                         <h4 class="text-center font-bold text-primary mb-3 text-sm flex items-center justify-center gap-2"><i class="fas fa-star text-gold"></i> <span data-i18n="top_clients_title">${translations[currentLang]['top_clients_title'] || 'أكثر العملاء طلباً للخدمات'}</span></h4>
                         <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-sm text-right ltr:text-left"><thead class="bg-primary/5 text-primary text-[10px]"><tr><th class="p-2 text-center">الترتيب</th><th class="p-2">الاسم</th><th class="p-2 text-left">الإيرادات</th></tr></thead><tbody>${topClientsRows}</tbody></table>
+                            <table class="w-full text-sm text-right ltr:text-left">
+                                <thead class="bg-primary/5 text-primary text-[10px]">
+                                    <tr>
+                                        <th class="p-2 text-center">الترتيب</th>
+                                        <th class="p-2">اسم المربط / العميل</th>
+                                        <th class="p-2 text-left">الإيرادات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${topClientsRows}</tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Invoices Table -->
                 <h4 class="font-black text-green-700 mb-3 text-lg print-break-inside-avoid border-b-2 border-green-700 inline-block pb-1"><i class="fas fa-arrow-up ml-1"></i> سجل الإيرادات والفواتير</h4>
-                <table class="w-full mb-8 border border-gray-300"><thead class="bg-gray-100 text-primary"><tr><th class="py-3 px-3 text-center border-b border-gray-300">م</th><th class="py-3 px-3 text-center border-b border-gray-300">رقم الفاتورة</th><th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">اسم العميل</th><th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">التاريخ والوقت</th><th class="py-3 px-3 text-left border-b border-gray-300">المبلغ</th></tr></thead><tbody>${invTableRows}</tbody></table>
+                <table class="w-full mb-8 border border-gray-300">
+                    <thead class="bg-gray-100 text-primary">
+                        <tr>
+                            <th class="py-3 px-3 text-center border-b border-gray-300">م</th>
+                            <th class="py-3 px-3 text-center border-b border-gray-300">رقم الفاتورة</th>
+                            <th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">اسم العميل</th>
+                            <th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">التاريخ والوقت</th>
+                            <th class="py-3 px-3 text-left border-b border-gray-300">المبلغ</th>
+                        </tr>
+                    </thead>
+                    <tbody>${invTableRows}</tbody>
+                </table>
+
+                <!-- Expenses Table -->
                 <h4 class="font-black text-red-700 mb-3 text-lg print-break-inside-avoid border-b-2 border-red-700 inline-block pb-1"><i class="fas fa-arrow-down ml-1"></i> سجل المصروفات والمدفوعات</h4>
-                <table class="w-full mb-6 border border-gray-300 print-break-inside-avoid"><thead class="bg-red-50 text-red-800"><tr><th class="py-3 px-3 text-center border-b border-gray-300">م</th><th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">البيان / المصروف</th><th class="py-3 px-3 text-center border-b border-gray-300">الكمية</th><th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">التاريخ والوقت</th><th class="py-3 px-3 text-left border-b border-gray-300">التكلفة الإجمالية</th></tr></thead><tbody>${expTableRows}</tbody></table>
-            </div>`;
+                <table class="w-full mb-6 border border-gray-300 print-break-inside-avoid">
+                    <thead class="bg-red-50 text-red-800">
+                        <tr>
+                            <th class="py-3 px-3 text-center border-b border-gray-300">م</th>
+                            <th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">البيان / المصروف</th>
+                            <th class="py-3 px-3 text-center border-b border-gray-300">الكمية</th>
+                            <th class="py-3 px-3 text-right ltr:text-left border-b border-gray-300">التاريخ والوقت</th>
+                            <th class="py-3 px-3 text-left border-b border-gray-300">التكلفة الإجمالية</th>
+                        </tr>
+                    </thead>
+                    <tbody>${expTableRows}</tbody>
+                </table>
+
+            </div>
+            `;
             
             document.getElementById('reportPrintArea').innerHTML = html;
             document.getElementById('viewReportModal').classList.remove('hidden');
-            setTimeout(() => { renderCharts(datesMap, servicesMap); }, 100);
+
+            setTimeout(() => {
+                renderCharts(datesMap, servicesMap);
+            }, 100);
         }
 
-        window.closeReportModal = function() { document.getElementById('viewReportModal').classList.add('hidden'); };
+        window.closeReportModal = function() {
+            document.getElementById('viewReportModal').classList.add('hidden');
+        };
 
         function renderCharts(datesMap, servicesMap) {
             if(dailyChartInst) dailyChartInst.destroy();
@@ -2117,19 +2478,35 @@
             const dateData = dateLabels.map(d => datesMap[d]);
 
             const ctxDaily = document.getElementById('dailyRevenueChart').getContext('2d');
-            dailyChartInst = new Chart(ctxDaily, { type: 'bar', data: { labels: dateLabels, datasets: [{ label: 'الإيرادات (SAR)', data: dateData, backgroundColor: '#1a7a7d', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+            dailyChartInst = new Chart(ctxDaily, {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{ label: 'الإيرادات (SAR)', data: dateData, backgroundColor: '#1a7a7d', borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
 
             const serviceLabels = Object.keys(servicesMap);
             const serviceData = serviceLabels.map(s => servicesMap[s]);
             const colors = ['#003e40', '#1a7a7d', '#d4af37', '#6b21a8', '#f59e0b', '#3b82f6'];
 
             const ctxService = document.getElementById('servicesPieChart').getContext('2d');
-            servicesChartInst = new Chart(ctxService, { type: 'doughnut', data: { labels: serviceLabels, datasets: [{ data: serviceData, backgroundColor: colors, borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+            servicesChartInst = new Chart(ctxService, {
+                type: 'doughnut',
+                data: {
+                    labels: serviceLabels,
+                    datasets: [{ data: serviceData, backgroundColor: colors, borderWidth: 1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
         }
 
-        // Initialize App Fallbacks
         window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => { checkAndSeedStuds().then(() => { listenToStuds(); listenToHomepage(); listenToServices(); }); }, 500);
+            applyLanguage(currentLang);
+            handleRouteChange();
+            // Start Fallback Seed Process if missing
+            setTimeout(() => { checkAndSeedStuds().then(() => { listenToStuds(); listenToHomepage(); listenToServices(); }); }, 1000);
         });
     </script>
 </body>
